@@ -1,26 +1,21 @@
 import cv2
 import pyautogui
 import pyscreeze
-from time import sleep
-# from PIL import Image
 import numpy as np
 import time
 
-def capture_screenshot(filename):
+def capture_screenshot(filename, region=(0, 0, 1920, 1080)):
     # 截取屏幕截图并保存为灰度图像
-    screenshot = pyscreeze.screenshot(region=(0, 0, 1920, 1080))  # 修改截图区域
-    screenshot = np.array(screenshot)  # 转换为NumPy数组
-    screenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite(filename, screenshot)
+    screenshot = pyscreeze.screenshot(region=region)  # 截取指定区域的屏幕截图
+    screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_BGR2GRAY)  # 将截图转换为灰度图像
+    cv2.imwrite(filename, screenshot)  # 保存截图为文件
     return screenshot
 
 def load_image(filename):
     # 读取图片并将其转换为灰度图像
-    image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
-    return image
+    return cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
 
 def click_button(target_image, screenshot_image, threshold=0.9):
-    # pyautogui.displayMousePosition()
     # 在屏幕截图中查找目标图像
     res = cv2.matchTemplate(screenshot_image, target_image, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, max_loc = cv2.minMaxLoc(res)
@@ -31,12 +26,12 @@ def click_button(target_image, screenshot_image, threshold=0.9):
         top_left = max_loc
         tagCenterX = top_left[0] + twidth // 2
         tagCenterY = top_left[1] + theight // 2
-        pyautogui.click(tagCenterX, tagCenterY, button='left')
+        pyautogui.click(tagCenterX, tagCenterY, button='left')  # 点击目标图像的中心点
     else:
         print("未找到目标")
 
 def find_all_matches_with_color_depth(target_image, screenshot_image, threshold=0.9):
-    # 在屏幕截图中查找目标图像
+    # 在屏幕截图中查找目标图像，并计算颜色深度
     res = cv2.matchTemplate(screenshot_image, target_image, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)
 
@@ -61,9 +56,8 @@ def click_button_and_capture(target_image_filename, screenshot_filename, screen_
     # 缩放截图
     screenshot_image = cv2.resize(screenshot_image, (int(screenshot_image.shape[1] / screen_scale), int(screenshot_image.shape[0] / screen_scale)))
 
-    # 如果目标图像是 "pay_button.png"，则获取颜色深度并过滤按钮
     if target_image_filename == "pay_button.png":
-        # 查找所有匹配的按钮
+        # 如果目标图像是 "pay_button.png"，则获取颜色深度并过滤按钮
         matches, num_matches = find_all_matches_with_color_depth(target_image, screenshot_image, threshold)
         
         found_button = False  # 用于标记是否找到了合适的按钮
@@ -77,13 +71,8 @@ def click_button_and_capture(target_image_filename, screenshot_filename, screen_
                     button_center_x = x 
                     button_center_y = y 
                     print(f"找到颜色深度{color_depth}的按钮，原始坐标：({x}, {y})，实际点击坐标：({button_center_x}, {button_center_y})")
-                    # time.sleep(1)
-                    # pyautogui.displayMousePosition()
                     pyautogui.click(button_center_x, button_center_y, button='left')
                     found_button = True  # 找到按钮后标记为 True
-                # else:
-                #     print(f"颜色深度{color_depth}超过阈值，不点击按钮，坐标：({x}, {y})")
-                #     return False
 
         if not found_button:
             print(f"未找到合适的按钮")
@@ -115,7 +104,6 @@ def simulate_mouse_scroll(amount, direction='vertical'):
 
 def main():
     screen_scale = 1
-    delay_seconds = 1
 
     while True:
         result = click_button_and_capture("pay_button.png", "pay_screenshot.png", screen_scale)
@@ -125,7 +113,6 @@ def main():
         else:
             print("下移屏幕")
             simulate_mouse_scroll(-2)
-            # time.sleep(1)
             continue 
             
 
@@ -141,25 +128,5 @@ def main():
                 simulate_mouse_scroll(-1)
                 continue
 
-        
-
 if __name__ == "__main__":
     main()
-
-
-
-# 流程一 (获取按钮)
-# 1.截取屏幕截图
-# 2.获取转账按钮坐标
-# 3.使用流程二遍历大于188的按钮
-
-# 流程二 （收款）
-# 1.点击转账按钮
-# 2.点击收款按钮
-# 3.点击返回按钮
-
-# 流程三 （next）
-# 1.滚轮向上滚动一下
-# 2.使用流程一遍历
-
-
